@@ -14,7 +14,14 @@
 */
 
 function calculateTotalSpentByCategory(transactions) {
-  return [];
+  const catogeries = transactions.map((transaction) => transaction.category);
+  const uniqueCategories = [...new Set(catogeries)];
+  const result = uniqueCategories.map((category) => {
+    const totalSpent = transactions.filter((transaction) => transaction.category === category)
+      .reduce((acc, transaction) => acc + transaction.price, 0);
+    return { category, totalSpent };
+  });
+  return result;
 }
 
 module.exports = calculateTotalSpentByCategory;

@@ -1,21 +1,139 @@
-/*
-  Implement a class `Calculator` having below methods
-    - initialise a result variable in the constructor and keep updating it after every arithmetic operation
-    - add: takes a number and adds it to the result
-    - subtract: takes a number and subtracts it from the result
-    - multiply: takes a number and multiply it to the result
-    - divide: takes a number and divide it to the result
-    - clear: makes the `result` variable to 0
-    - getResult: returns the value of `result` variable
-    - calculate: takes a string expression which can take multi-arithmetic operations and give its result
-      example input: `10 +   2 *    (   6 - (4 + 1) / 2) + 7`
-      Points to Note: 
-        1. the input can have multiple continuous spaces, you're supposed to avoid them and parse the expression correctly
-        2. the input can have invalid non-numerical characters like `5 + abc`, you're supposed to throw error for such inputs
+class Calculator {
 
-  Once you've implemented the logic, test your code by running
-*/
+  constructor() {
+    this.result = 0;
+  }
 
-class Calculator {}
+  add(num) {
+    this.result += num;
+  }
+
+  subtract(num) {
+    this.result -= num;
+  }
+
+  multiply(num) {
+    this.result *= num;
+  }
+
+  divide(num) {
+    if (num === 0) {
+      throw new Error("Division by zero is not allowed");
+    }
+    this.result /= num;
+  }
+
+  clear() {
+    this.result = 0;
+  }
+
+  getResult() {
+    return this.result;
+  }
+
+  calculate(expression) {
+    // Remove all spaces from the expression
+    expression = expression.replace(/\s+/g, '');
+
+    // Check for invalid characters
+    if (/[^0-9+\-*/().]/.test(expression)) {
+      throw new Error("Invalid characters in expression");
+    }
+
+    // Validate parentheses
+    if (!this.areParenthesesBalanced(expression)) {
+      throw new Error("Invalid parentheses in expression");
+    }
+
+    const regex = /(\d+(\.\d+)?|\+|\-|\*|\/|\(|\))/g;
+    const tokens = expression.match(regex);
+    let i = 0;
+
+    const evaluate = () => {
+      const values = [];
+      const operators = [];
+
+      const applyOperator = () => {
+        const b = values.pop();
+        const a = values.pop();
+        const op = operators.pop();
+        values.push(this.applyOperator(a, b, op));
+      };
+
+      while (i < tokens.length) {
+        const token = tokens[i];
+        if (token === '(') {
+          i++;
+          values.push(evaluate());
+        } else if (token === ')') {
+          break;
+        } else if (token === '+' || token === '-' || token === '*' || token === '/') {
+          while (operators.length && this.precedence(operators[operators.length - 1]) >= this.precedence(token)) {
+            applyOperator();
+          }
+          operators.push(token);
+        } else {
+          values.push(parseFloat(token));
+        }
+        i++;
+      }
+
+      while (operators.length) {
+        applyOperator();
+      }
+
+      return values[0];
+    };
+
+    this.result = evaluate();
+    return this.result;
+  }
+
+  applyOperator(a, b, operator) {
+    switch (operator) {
+      case '+':
+        return a + b;
+      case '-':
+        return a - b;
+      case '*':
+        return a * b;
+      case '/':
+        if (b === 0) {
+          throw new Error("Division by zero is not allowed");
+        }
+        return a / b;
+      default:
+        return a;
+    }
+  }
+
+  precedence(operator) {
+    switch (operator) {
+      case '+':
+      case '-':
+        return 1;
+      case '*':
+      case '/':
+        return 2;
+      default:
+        return 0;
+    }
+  }
+
+  areParenthesesBalanced(expression) {
+    let stack = [];
+    for (let char of expression) {
+      if (char === '(') {
+        stack.push(char);
+      } else if (char === ')') {
+        if (stack.length === 0) {
+          return false;
+        }
+        stack.pop();
+      }
+    }
+    return stack.length === 0;
+  }
+}
 
 module.exports = Calculator;
